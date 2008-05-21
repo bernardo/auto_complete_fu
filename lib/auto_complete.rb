@@ -31,17 +31,25 @@ module AutoComplete
   # * http://script.aculo.us/demos/ajax/autocompleter_customized
   module ClassMethods
     def auto_complete_for(object, method, options = {})
-      define_method("auto_complete_for_#{object}_#{method}") do
-        find_options = { 
-          :conditions => [ "LOWER(#{method}) LIKE ?", '%' + params[object][method].downcase + '%' ], 
-          :order => "#{method} ASC",
-          :limit => 10 }.merge!(options)
-        
-        @items = object.to_s.camelize.constantize.find(:all, find_options)
+      unless options.delete(:local)
+        define_method("auto_complete_for_#{object}_#{method}") do
+          find_options = { 
+            :conditions => [ "LOWER(#{method}) LIKE ?", '%' + params[object][method].downcase + '%' ], 
+            :order => "#{method} ASC",
+            :limit => 10 }.merge(options)
 
-        render :inline => "<%= auto_complete_result @items, '#{method}' %>"
+          @items = object.to_s.camelize.constantize.find(:all, find_options)
+
+          render :inline => "<%= auto_complete_result @items, '#{method}' %>"
+        end
+      else
+        define_method("auto_complete_for_#{object}_#{method}") do
+          find_options = {:order => "#{method} ASC"}.merge(options)
+          render :json => object.to_s.camelize.constantize.find(:all, find_options).map(&method)
+        end
       end
     end
+
   end
   
 end
