@@ -56,10 +56,11 @@ module AutoCompleteMacrosHelper
   # <tt>:method</tt>::               Specifies the HTTP verb to use when the autocompletion
   #                                  request is made. Defaults to POST.
   def auto_complete_field(field_id, options = {})
-    function =  "var #{field_id}_auto_completer = new Ajax.Autocompleter("
+    var = "var #{field_id}_auto_completer"
+    function = ( options[:local] ?  "#{var} = new Autocompleter.Local(" : "#{var} = new Ajax.Autocompleter(" )
     function << "'#{field_id}', "
     function << "'" + (options[:update] || "#{field_id}_auto_complete") + "', "
-    function << "'#{url_for(options[:url])}'"
+    function << ( options[:local] ? array_or_string_for_javascript(options[:local]) : "'#{url_for(options[:url])}'" )
     
     js_options = {}
     js_options[:tokens] = array_or_string_for_javascript(options[:tokens]) if options[:tokens]
@@ -109,10 +110,27 @@ module AutoCompleteMacrosHelper
   # auto_complete_for to respond the AJAX calls,
   # 
   def text_field_with_auto_complete(object, method, tag_options = {}, completion_options = {})
-    (completion_options[:skip_style] ? "" : auto_complete_stylesheet) +
-    text_field(object, method, tag_options) +
+    text_field_with_auto_complete_fu(object, 
+      method, 
+      :text_field => tag_options, 
+      :auto_complete => {:method=>:post}.merge(completion_options), 
+      :skip_style=>completion_options.delete(:skip_style) )
+  end
+  
+  def text_field_with_auto_complete_fu(object, method, options={})
+    skip_style = options[:skip_style]
+    auto_complete_options = {
+      :url => options[:url] || { :action => "auto_complete_for_#{object}_#{method}" },
+      :local => options[:local],
+      :method => :get
+    }.merge(options[:auto_complete] || {})
+
+    text_field_options = options[:text_field] || {}
+    
+    (skip_style ? "" : auto_complete_stylesheet) +
+    text_field(object, method, text_field_options) +
     content_tag("div", "", :id => "#{object}_#{method}_auto_complete", :class => "auto_complete") +
-    auto_complete_field("#{object}_#{method}", { :url => { :action => "auto_complete_for_#{object}_#{method}" } }.update(completion_options))
+    auto_complete_field("#{object}_#{method}", auto_complete_options )
   end
 
   private

@@ -72,18 +72,38 @@ class AutoCompleteTest < Test::Unit::TestCase
       auto_complete_result(resultuniq, :title, "est")
   end
   
-  def test_text_field_with_auto_complete
+  def test_legacy_text_field_with_auto_complete
     assert_match %(<style type="text/css">),
       text_field_with_auto_complete(:message, :recipient)
 
-    assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Ajax.Autocompleter('message_recipient', 'message_recipient_auto_complete', 'http://www.example.com/auto_complete_for_message_recipient', {})\n//]]>\n</script>),
+    assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Ajax.Autocompleter('message_recipient', 'message_recipient_auto_complete', 'http://www.example.com/auto_complete_for_message_recipient', {method:'post'})\n//]]>\n</script>),
       text_field_with_auto_complete(:message, :recipient, {}, :skip_style => true)
   end
   
-  def test_text_field_with_auto_complete_and_protect_against_forgery
+  def test_text_field_with_auto_complete_fu_style
+    assert_match %(<style type="text/css">),
+      text_field_with_auto_complete_fu(:message, :recipient)
+  end
+
+  def test_text_field_with_auto_complete_fu_raw
+    assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Ajax.Autocompleter('message_recipient', 'message_recipient_auto_complete', 'http://www.example.com/auto_complete_for_message_recipient', {method:'get'})\n//]]>\n</script>),
+      text_field_with_auto_complete_fu(:message, :recipient, :skip_style => true)
+  end
+
+  def test_text_field_with_auto_complete_fu_with_local_array
+    assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Autocompleter.Local('message_recipient', 'message_recipient_auto_complete', ['first','second','third'], {method:'get'})\n//]]>\n</script>),
+      text_field_with_auto_complete_fu(:message, :recipient, :skip_style => true, :local=>["first", "second", "third"])
+  end
+
+  def test_text_field_with_auto_complete_fu_with_custom_url
+    assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Ajax.Autocompleter('message_recipient', 'message_recipient_auto_complete', 'http://www.example.com/my_custom_url', {method:'get'})\n//]]>\n</script>),
+      text_field_with_auto_complete_fu(:message, :recipient, :skip_style => true, :url=>"http://www.example.com/my_custom_url")
+  end
+  
+  def test_text_field_with_auto_complete_fu_and_protect_against_forgery
     @protect_against_forgery = true
-    assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Ajax.Autocompleter('message_recipient', 'message_recipient_auto_complete', 'http://www.example.com/auto_complete_for_message_recipient', {parameters:'authenticity_token=' + encodeURIComponent('some_secret_hash')})\n//]]>\n</script>),
-      text_field_with_auto_complete(:message, :recipient, {}, :skip_style => true)    
+    assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Ajax.Autocompleter('message_recipient', 'message_recipient_auto_complete', 'http://www.example.com/auto_complete_for_message_recipient', {method:'post', parameters:'authenticity_token=' + encodeURIComponent('some_secret_hash')})\n//]]>\n</script>),
+      text_field_with_auto_complete_fu(:message, :recipient, :skip_style => true, :auto_complete=>{:method=>:post})    
   end
     
   # stubbed CSRF-related methods for testing
