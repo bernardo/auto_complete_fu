@@ -91,13 +91,30 @@ class AutoCompleteTest < Test::Unit::TestCase
   end
 
   def test_text_field_with_auto_complete_fu_with_local_array
-    assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Autocompleter.Local('message_recipient', 'message_recipient_auto_complete', ['first','second','third'], {method:'get'})\n//]]>\n</script>),
+    assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Autocompleter.Local('message_recipient', 'message_recipient_auto_complete', ['first','second','third'], {})\n//]]>\n</script>),
       text_field_with_auto_complete_fu(:message, :recipient, :skip_style => true, :local=>["first", "second", "third"])
   end
 
   def test_text_field_with_auto_complete_fu_with_custom_url
     assert_dom_equal %(<input id=\"message_recipient\" name=\"message[recipient]\" size=\"30\" type=\"text\" /><div class=\"auto_complete\" id=\"message_recipient_auto_complete\"></div><script type=\"text/javascript\">\n//<![CDATA[\nvar message_recipient_auto_completer = new Ajax.Autocompleter('message_recipient', 'message_recipient_auto_complete', 'http://www.example.com/my_custom_url', {method:'get'})\n//]]>\n</script>),
       text_field_with_auto_complete_fu(:message, :recipient, :skip_style => true, :url=>"http://www.example.com/my_custom_url")
+  end
+  
+  def test_text_field_with_auto_complete_fu_with_local_from_url
+      expected = %Q%<input id="message_recipient" name="message[recipient]" size="30" type="text" /><div class="auto_complete" id="message_recipient_auto_complete"></div><script type="text/javascript">
+//<![CDATA[
+
+        new Ajax.Request('http://www.example.com/auto_complete', {
+              method: 'post',
+              onSuccess: function(transport) {
+                var message_recipient_auto_completer = new Autocompleter.Local('message_recipient', 'message_recipient_auto_complete', eval(transport.responseText), {})
+              }
+        });
+        
+//]]>
+</script>%
+    assert_dom_equal expected,
+      text_field_with_auto_complete_fu(:message, :recipient, :skip_style => true, :local=>{ :action => "auto_complete" })
   end
   
   def test_text_field_with_auto_complete_fu_and_protect_against_forgery

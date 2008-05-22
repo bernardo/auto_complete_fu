@@ -58,9 +58,22 @@ module AutoCompleteMacrosHelper
   def auto_complete_field(field_id, options = {})
     var = "var #{field_id}_auto_completer"
     function = ( options[:local] ?  "#{var} = new Autocompleter.Local(" : "#{var} = new Ajax.Autocompleter(" )
+    
+    #first parameter
     function << "'#{field_id}', "
+    
+    #second parameter
     function << "'" + (options[:update] || "#{field_id}_auto_complete") + "', "
-    function << ( options[:local] ? array_or_string_for_javascript(options[:local]) : "'#{url_for(options[:url])}'" )
+    
+    #third parameter
+    function << if options[:local].is_a?(Array)
+      array_or_string_for_javascript(options[:local])
+    elsif options[:local] #it should be a URL
+      fetch_array_from_url = true
+      "eval(transport.responseText)"
+    else
+      "'#{url_for(options[:url])}'"
+    end
     
     js_options = {}
     js_options[:tokens] = array_or_string_for_javascript(options[:tokens]) if options[:tokens]
@@ -69,7 +82,7 @@ module AutoCompleteMacrosHelper
     js_options[:select]     = "'#{options[:select]}'" if options[:select]
     js_options[:paramName]  = "'#{options[:param_name]}'" if options[:param_name]
     js_options[:frequency]  = "#{options[:frequency]}" if options[:frequency]
-    js_options[:method]     = "'#{options[:method].to_s}'" if options[:method]
+    js_options[:method]     = "'#{options[:method].to_s}'" if options[:method] && !options[:local]
 
     if protect_against_forgery? && js_options[:method] != "'get'"
       js_options[:parameters] = "'#{request_forgery_protection_token}=' + encodeURIComponent('#{escape_javascript form_authenticity_token}')"
@@ -80,8 +93,20 @@ module AutoCompleteMacrosHelper
       js_options[v] = options[k] if options[k]
     end
 
+    #fourth parameter
     function << (', ' + options_for_javascript(js_options) + ')')
-
+    
+    #requests array from url if options[:local] is an URL
+    function = 
+      %Q[
+        new Ajax.Request('#{url_for(options[:local])}', {
+              method: 'post',
+              onSuccess: function(transport) {
+                #{function}
+              }
+        });
+        ] if fetch_array_from_url
+    
     javascript_tag(function)
   end
   
@@ -161,5 +186,5 @@ module AutoCompleteMacrosHelper
         }
       EOT
     end
-
+    
 end   
