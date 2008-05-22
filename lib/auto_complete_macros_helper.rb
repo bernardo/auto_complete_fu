@@ -137,20 +137,22 @@ module AutoCompleteMacrosHelper
   def text_field_with_auto_complete(object, method, tag_options = {}, completion_options = {})
     text_field_with_auto_complete_fu(object, 
       method, 
-      :text_field => tag_options, 
-      :auto_complete => {:method=>:post}.merge(completion_options), 
-      :skip_style=>completion_options.delete(:skip_style) )
+      tag_options.merge(
+        :skip_style=>completion_options.delete(:skip_style),
+        :auto_complete => {:method=>:post}.merge(completion_options)
+      ) 
+    )
   end
   
   def text_field_with_auto_complete_fu(object, method, options={})
-    skip_style = options[:skip_style]
+    skip_style = options.delete(:skip_style)
     auto_complete_options = {
-      :url => options[:url] || { :action => "auto_complete_for_#{object}_#{method}" },
-      :local => options[:local],
+      :url => options.delete(:url) || { :action => "auto_complete_for_#{object}_#{method}" },
+      :local => options.delete(:local),
       :method => :get
-    }.merge(options[:auto_complete] || {})
+    }.merge(options.delete(:auto_complete) || {})
 
-    text_field_options = options[:text_field] || {}
+    text_field_options = options
     
     (skip_style ? "" : auto_complete_stylesheet) +
     text_field(object, method, text_field_options) +
