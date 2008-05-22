@@ -105,7 +105,7 @@ class AutoCompleteTest < Test::Unit::TestCase
 //<![CDATA[
 
         new Ajax.Request('http://www.example.com/auto_complete', {
-              method: 'post',
+              method: 'get',
               onSuccess: function(transport) {
                 var message_recipient_auto_completer = new Autocompleter.Local('message_recipient', 'message_recipient_auto_complete', eval(transport.responseText), {})
               }

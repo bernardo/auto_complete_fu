@@ -100,7 +100,7 @@ module AutoCompleteMacrosHelper
     function = 
       %Q[
         new Ajax.Request('#{url_for(options[:local])}', {
-              method: 'post',
+              method: 'get',
               onSuccess: function(transport) {
                 #{function}
               }
