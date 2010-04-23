@@ -149,15 +149,18 @@ module AutoCompleteMacrosHelper
     auto_complete_options = {
       :url => options.delete(:url) || { :action => "auto_complete_for_#{object}_#{method}" },
       :local => options.delete(:local),
-      :method => :get
+      :method => :get,
+      :id => "#{object}_#{method}"
     }.merge(options.delete(:auto_complete) || {})
+
+    field_id = auto_complete_options.delete(:id)
 
     text_field_options = options
     
     (skip_style ? "" : auto_complete_stylesheet) +
     text_field(object, method, text_field_options) +
-    content_tag("div", "", :id => "#{object}_#{method}_auto_complete", :class => "auto_complete") +
-    auto_complete_field("#{object}_#{method}", auto_complete_options )
+    content_tag("div", "", :id => "#{field_id}_auto_complete", :class => "auto_complete") +
+    auto_complete_field(field_id, auto_complete_options )
   end
 
   private
